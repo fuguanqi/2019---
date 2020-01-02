@@ -1,0 +1,105 @@
+f_star(c)= g(c)+h_star(c)
+=distance_sum(path[])+cal_dis(c,B)
+
+
+
+
+funcion a_star_path(Point s,array<Point> path[]){
+	path[].append(s);
+	n[]=s.findNeighbours();
+	if(B in n){
+		path[].append(B);
+		return path[];
+	}
+	n.sort_by_f_star(dec);
+	for(i=n.length-1;i>=0;i--){
+		ret=a_star_path(n[i],path[]);
+		if(ret!=FALSE){
+			return ret;
+		}
+	}
+	path[].delete(s);
+	return FALSE;
+}
+	
+
+
+funcion generate_new(path[]){
+	while(true){
+		alt_point=random.randint(1,path.length-2);
+		new_path[]=path[0:alt_point-1];
+		n[]=path[alt_point-1].findNeighbours();
+		n.delete(path[alt_point]);
+		n.sort_by_f_star(dec);
+		for(i=n.length-1;i>=0;i--){
+			ret=a_star_path(n[i],path[]);
+			if(ret!=FALSE){
+				new_path[].append(ret);
+				return new_path[];
+			}
+		}//若n中剩余候选节点皆不通则重新运行
+	}
+}
+
+
+//归一化
+function cal_stat(path[]){
+	
+	dis[].append(get_path_dis(path[],-1))
+
+	for(i=0;i<100;i++){
+		dis[].append(get_path_dis(generate_new(path[])));
+	}
+	dis_mean=dis.cal_avg();
+	dis_dev=dis.cal_dev();
+
+
+	count[].append(path[].length)
+	for(i=0;i<100;i++){
+		count[].append(generate_new(path[]).length);
+	}
+
+	count_mean=count.cal_avg();
+	count_dev=count.cal_dev();
+
+	return dis_mean,dis_dev,count_mean,count_dev;
+}
+
+
+
+//全局变量dis_mean,dis_dev,count_mean,count_dev
+function cal_goal(path[]){
+	w1=1;
+	w2=1;
+	dis= get_path_dis(path[],path.shape[0]-1);
+	coount=path.shape[0]
+	return w1*dis+w2*count
+}
+
+
+//全局变量dis_mean,dis_dev,count_mean,count_dev,pos_mean,pos_dev
+function cal_goal(path[]){
+	w1=1;
+	w2=1;
+	w2=1;
+	dis= get_path_dis(path[],path.shape[0]-1);
+	coount=path.shape[0]
+	pos=cal_pos(path[])
+	return w1*(dis-dis_mean)/dis_dev+w2*(count-count_mean)/count_dev+w3*(pos-pos_mean)/pos_dev
+}
+
+
+
+function cal_pos(path[]){
+	pos=1
+	for(point int path[]){
+		if(point.flag==1){
+			if(point.ype==1){
+				pos=pos*(0.8+0.2*(min(ALPHA1,BETA1)-min(5,cur_error_v))/min(ALPHA1,BETA1))
+			}
+			if(point.type==0){
+				pos=pos*(0.8+0.2(min(ALPHA2,BETA2)-min(5,cur_error_v))/min(ALPHA2,BETA2))
+			}
+		}
+	}
+}
