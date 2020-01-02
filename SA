@@ -1,0 +1,232 @@
+/*
+* J(y)：在状态y时的评价函数值
+* Y(i)：表示当前状态
+* Y(i+1)：表示新的状态
+* r： 用于控制降温的快慢
+* T： 系统的温度，系统初始应该要处于一个高温的状态
+* T_min ：温度的下限，若温度T达到T_min，则停止搜索
+*/
+
+
+struct Corrector{
+	int id;
+
+	float x;
+	float y;
+	float z;
+	int type;
+	int fail;
+}
+
+struct Point{
+	float x;
+	float y;
+	float z;
+}
+
+Point A;//起始点
+Point B;
+
+
+const ALPHA1; //常数
+const ALPHA2;
+const BETA1;
+const BETA2;
+const THETA;
+const DELTA;
+
+
+array<Corrector> cps;   //所有校验点集合，按x坐标从小到大排序,从数据文件读入,包括AB。
+
+
+array<int> path;  //可行解路径，排序的所经校验点下表，比如[162 ,238 ,362 ,501 ] 代表一个解
+
+function greedy_generate(){ //贪婪方法生成可行解
+	array<int> solution;
+	//array<int> candidates;  //候选校验点集合
+	int cur_point=0;
+	float cur_error_v=0;
+	float cur_error_h=0;
+	while(cur_point.x<B.x){
+		int t=cur_point+1;
+		int next;
+		float max_dx=min((ALPHA1-cur_error_v)/DELTA,
+						   (ALPHA2-cur_error_h)/DELTA,
+						   (BETA1-cur_error_v)/DELTA,
+						   (BETA2-cur_error_h)/DELTA
+						   );   
+						   //误差线性增大所限制的范围，可仅用x坐标粗略计算上限。选择比较急迫的约束作为贪心选择目标
+
+		float max_dis_to_B=min((THETA-cur_error_v)/DELTA,(THETA-cur_error_h)/DELTA);
+		if(max_dis_to_B<cal_dis(B,cps[cur_point])){
+			break;
+		}
+		if(max_dx==((ALPHA1-cur_error_v)/DELTA || max_dx== (BETA1-cur_error_v)/DELTA){  //若垂直误差离上限最近
+			for( t; cps[t].x < cps[cur_point].x + max_dx;t++ ){  //选择最大可选v校验点
+				if(distance(cps[cur_point],cps[t])<max_dx && cps[t].type==1 ){
+					next=t;
+					
+					//candidates.add(t);
+				}
+			}
+			cur_error_v=0;
+			cur_error_h=cur_error_h+DELTA*distance(cps[cur_point],cps[next]);
+
+		}
+		
+		else{
+			for( t; cps[t].x < cps[cur_point].x + max_dx;t++ ){  //选择最大可选h校验点
+				if(distance(cps[cur_point],cps[t])<max_dx && cps[t].type==0){
+					next=t;
+					
+					//candidates.add(t);
+				}
+			}
+			cur_error_h=0;
+			cur_error_v=cur_error_v+DELTA*distance(cps[cur_point],cps[next]);
+		}
+		
+
+		//int next= max_in(dandidates);
+
+		solution.add(next);
+		cur_point=next;
+		//candidates.clear();
+
+	}
+	return solution;
+}
+
+
+
+function generate_new(array<int> solution){ //状态产生函数
+	array<int> candidates;  //候选校验点集合
+	array<int> new_solution;
+	int alt_point= random(0,solution.length-1);   //随机取出一点进行变异
+	int pre=0;
+	int cur_point=0;
+	cur_error_v=0;
+	cur_error_h=0;
+	while(cur_point<=alt_point){
+		if(cur_point<alt_point){
+			new_solution.add(cps[solution[cur_point]]);
+			if(cps[solution[cur_point]].type==1){
+				cur_error_v=0;
+	 			cur_error_h=cur_error_h+DELTA*distance(cps[pre],cps[solution[cur_point]]);
+			}			
+			else{
+				cur_error_v=cur_error_v+DELTA*distance(cps[pre],cps[solution[cur_point]]);
+				cur_error_h=0;
+			}
+			cur_point++;
+			pre++;
+		}
+		else{
+			float max_dx=min((ALPHA1-cur_error_v)/DELTA,
+						     (ALPHA2-cur_error_h)/DELTA,
+						     (BETA1-cur_error_v)/DELTA,
+						     (BETA2-cur_error_h)/DELTA
+						    );   
+						    //误差线性增大所限制的范围，可仅用x坐标粗略计算上限。选择比较急迫的约束作为贪心选择目标
+			float max_dis_to_B=min((THETA-cur_error_v)/DELTA,(THETA-cur_error_h)/DELTA);
+			if(max_dis_to_B>distance(B,cps[pre])){
+				break;
+			}
+			int next;
+			if(max_dx==((ALPHA1-cur_error_v)/DELTA || max_dx== (BETA1-cur_error_v)/DELTA){  //若垂直误差离上限最近
+				for( int t=solution[pre]+1 ; cps[t].x < cps[solution[pre]].x + max_dx;t++ ){  //选择最大可选v校验点
+					if(distance(cps[solution[pre]],cps[t])<max_dx && cps[t].type==1 ){
+						//next=t;
+					
+						candidates.append(t);
+					}
+				}
+				next= random_of_top_n_from(candidates,3); //从候选集合最大的三个中随机挑选一个
+				cur_error_v=0;
+				cur_error_h=cur_error_h+DELTA*distance(cps[solution[pre]],cps[next]);
+
+			}
+		
+			else{
+				for( int t=solution[pre]+1 ; cps[t].x < cps[solution[pre]].x + max_dx;t++ ){  //选择最大可选h校验点
+					if(distance(cps[solution[pre]],cps[t])<max_dx && cps[t].type==0){
+						//next=t;
+					
+						candidates.append(t);
+					}
+				}
+				next= random_of_top_n_from(candidates,3); //从候选集合最大的三个中随机挑选一个
+				cur_error_h=0;
+				cur_error_v=cur_error_v+DELTA*distance(cps[solution[pre]],cps[next]);
+			}
+			new_solution.append(cps[next]);
+			cur_point=cps[next];  //这个cur_point跟第六行的cur_point不同，此处是异变开始处的节点下标，对应cps的下标。之前的cur_point表示旧解solution数组中的下标
+			while(cps[cur_point]!=B){
+				int t=cur_point+1;
+				float max_dx=min((ALPHA1-cur_error_v)/DELTA,
+								   (ALPHA2-cur_error_h)/DELTA,
+								   (BETA1-cur_error_v)/DELTA,
+								   (BETA2-cur_error_h)/DELTA
+								   );   
+								   //误差线性增大所限制的范围，可仅用x坐标粗略计算上限。选择比较急迫的约束作为贪心选择目标
+				max_dis_to_B=min((THETA-cur_error_v)/DELTA,(THETA-cur_error_h)/DELTA);
+				if(max_dis_to_B>cal_dis(B,cps[cur_point])){
+					return;
+				}
+
+				if(max_dx==((ALPHA1-cur_error_v)/DELTA || max_dx== (BETA1-cur_error_v)/DELTA){  //若垂直误差离上限最近
+					for( t; cps[t].x < cps[cur_point].x + max_dx;t++ ){  //选择最大可选v校验点
+						if(distance(cps[cur_point],cps[t])<max_dx && cps[t].type==1 ){
+							next=t;
+					
+						}
+					}
+				cur_error_v=0;
+				cur_error_h=cur_error_h+DELTA*distance(cps[cur_point],cps[next]);
+
+				}
+		
+				else{
+					for( t; cps[t].x < cps[cur_point].x + max_dx;t++ ){  //选择最大可选h校验点
+						if(distance(cps[cur_point],cps[t])<max_dx && cps[t].type==0){
+							next=t;
+							
+						}
+					}
+				cur_error_h=0;
+				cur_error_v=cur_error_v+DELTA*distance(cps[cur_point],cps[next]);
+				
+				}
+				solution.append(next);
+				cur_point=next;
+				solution.append(next);
+			}
+
+	}
+		
+
+
+
+
+function goal(array<int> solution){
+	
+}
+
+
+while( T > T_min )
+{
+　　dE = J( Y(i+1) ) - J( Y(i) ) ; 
+
+　　if ( dE >=0 )                        //表达移动后得到更优解，则总是接受移动
+        Y(i+1) = Y(i) ;                  //接受从Y(i)到Y(i+1)的移动
+　　else
+　　{
+       if ( exp( dE/T ) > random( 0 , 1 ) )
+            Y(i+1) = Y(i) ;              //接受从Y(i)到Y(i+1)的移动
+　　}
+　　T = r * T ;                          //降温退火 ，0<r<1 。r越大，降温越慢；r越小，降温越快
+　　/*
+　　* 若r过大，则搜索到全局最优解的可能会较高，但搜索的过程也就较长。若r过小，则搜索的过程会很快，但最终可能会达到一个局部最优值
+　　*/
+　　i ++ ;
+}
